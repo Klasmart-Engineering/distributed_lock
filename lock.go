@@ -21,6 +21,7 @@ type RedisLock struct {
 	dc          DistributedLockConfig
 	lockChannel chan bool
 	exitChannel chan struct{}
+	isGetLock	bool
 }
 
 func (r *RedisLock) Lock() {
@@ -34,6 +35,7 @@ func (r *RedisLock) Lock() {
 				ret, _ := drivers.GetRedis().SetNX(r.dc.Key, "1", r.dc.Timeout).Result()
 				if ret {
 					r.lockChannel <- true
+					r.isGetLock = true
 					return
 				}
 
@@ -55,7 +57,11 @@ func (r *RedisLock) Lock() {
 }
 
 func (r *RedisLock) Unlock() {
+	if !r.isGetLock{
+		return
+	}
 	drivers.GetRedis().Del(r.dc.Key)
+	r.isGetLock = false
 }
 
 func NewRedisLock(dc DistributedLockConfig) (LockDriver, error) {
