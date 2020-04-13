@@ -7,64 +7,79 @@ import (
 	"time"
 )
 
-const (
-	LockDelay = 5
-)
-
 var (
 	ErrUnknownDistributedLockDriver = errors.New("Unknown distributed lock driver")
-	ErrLockTimeout = errors.New("Lock timeout")
+	ErrLockTimeout                  = errors.New("Lock timeout")
 )
 
-type LockDriver  interface {
+type LockDriver interface {
 	Lock()
 	Unlock()
 }
 
 type RedisLock struct {
-	dc DistributedLockConfig
+	dc          DistributedLockConfig
+	lockChannel chan bool
+	exitChannel chan struct{}{
+}
 }
 
 func (r *RedisLock) Lock() {
 	//尝试等待5s
-	for i := 0; i < r.dc.RetryLockDuration * 100; i++ {
-		ret, _ := drivers.GetRedis().SetNX(r.dc.Key, "1", r.dc.Timeout).Result()
-		if ret {
-			return
-		}
+	go func() {
+		for {
+			select {
+			case <-r.exitChannel:
+				break
+			default:
+				ret, _ := drivers.GetRedis().SetNX(r.dc.Key, "1", r.dc.Timeout).Result()
+				if ret {
+					r.lockChannel <- true
+					return
+				}
 
-		time.Sleep(time.Duration(10) * time.Millisecond)
+				time.Sleep(time.Duration(10) * time.Millisecond)
+			}
+
+		}
+	}()
+
+	select {
+	case <-r.lockChannel:
+		r.exitChannel <- struct{}{}
+		return
+	case <-r.dc.Ctx.Done():
+		r.exitChannel <- struct{}{}
+		return
 	}
+
 }
 
 func (r *RedisLock) Unlock() {
 	drivers.GetRedis().Del(r.dc.Key)
 }
 
-func NewRedisLock(dc DistributedLockConfig) (LockDriver , error){
+func NewRedisLock(dc DistributedLockConfig) (LockDriver, error) {
 	err := drivers.OpenRedis(dc.RedisConfig)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	return &RedisLock{
-		dc: dc,
+		dc:          dc,
+		lockChannel: make(chan bool),
+		exitChannel: make(chan struct{}),
 	}, nil
 }
 
-
 type DistributedLockConfig struct {
-	Driver string
-	RetryLockDuration int
-	Key string
-	Timeout time.Duration
-	Ctx context.Context
+	Driver      string
+	Key         string
+	Timeout     time.Duration
+	Ctx         context.Context
 	RedisConfig drivers.RedisConfig
 }
 
-func NewDistributedLock(dc DistributedLockConfig) (LockDriver , error) {
-	if dc.RetryLockDuration <= 0 {
-		dc.RetryLockDuration = LockDelay
-	}
+func NewDistributedLock(dc DistributedLockConfig) (LockDriver, error) {
 	if dc.Driver == "redis" {
 		//打开redis
 		return NewRedisLock(dc)
