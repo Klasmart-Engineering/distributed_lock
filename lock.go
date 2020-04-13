@@ -16,7 +16,7 @@ var (
 )
 
 type ILock interface {
-	Lock(key string, timeout int) error
+	Lock(key string, timeout time.Duration) error
 	Unlock(key string)
 }
 
@@ -24,10 +24,10 @@ type RedisLock struct {
 	dc DistributedLockConfig
 }
 
-func (r *RedisLock) Lock(key string, timeout int) error {
+func (r *RedisLock) Lock(key string, timeout time.Duration) error {
 	//尝试等待5s
 	for i := 0; i < r.dc.RetryLockDuration * 100; i++ {
-		ret, err := drivers.GetRedis().SetNX(key, "1", time.Duration(timeout)*time.Second).Result()
+		ret, err := drivers.GetRedis().SetNX(key, "1", timeout).Result()
 		if err != nil {
 			return err
 		}
