@@ -34,8 +34,8 @@ func (r *RedisLock) Lock() {
 			default:
 				ret, _ := drivers.GetRedis().SetNX(r.dc.Key, "1", r.dc.Timeout).Result()
 				if ret {
-					r.lockChannel <- true
 					r.isGetLock = true
+					r.lockChannel <- true
 					return
 				}
 
