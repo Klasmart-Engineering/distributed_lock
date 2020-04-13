@@ -20,8 +20,7 @@ type LockDriver interface {
 type RedisLock struct {
 	dc          DistributedLockConfig
 	lockChannel chan bool
-	exitChannel chan struct{}{
-}
+	exitChannel chan struct{}
 }
 
 func (r *RedisLock) Lock() {
