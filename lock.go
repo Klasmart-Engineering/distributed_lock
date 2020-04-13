@@ -2,6 +2,7 @@ package distributed_lock
 
 import (
 	"calmisland/distributed_lock/drivers"
+	"context"
 	"errors"
 	"time"
 )
@@ -16,33 +17,28 @@ var (
 )
 
 type LockDriver  interface {
-	Lock(key string, timeout time.Duration) error
-	Unlock(key string)
+	Lock()
+	Unlock()
 }
 
 type RedisLock struct {
 	dc DistributedLockConfig
 }
 
-func (r *RedisLock) Lock(key string, timeout time.Duration) error {
+func (r *RedisLock) Lock() {
 	//尝试等待5s
 	for i := 0; i < r.dc.RetryLockDuration * 100; i++ {
-		ret, err := drivers.GetRedis().SetNX(key, "1", timeout).Result()
-		if err != nil {
-			return err
-		}
+		ret, _ := drivers.GetRedis().SetNX(r.dc.Key, "1", r.dc.Timeout).Result()
 		if ret {
-			return nil
+			return
 		}
 
 		time.Sleep(time.Duration(10) * time.Millisecond)
 	}
-
-	return ErrLockTimeout
 }
 
-func (r *RedisLock) Unlock(key string) {
-	drivers.GetRedis().Del(key)
+func (r *RedisLock) Unlock() {
+	drivers.GetRedis().Del(r.dc.Key)
 }
 
 func NewRedisLock(dc DistributedLockConfig) (LockDriver , error){
@@ -59,6 +55,9 @@ func NewRedisLock(dc DistributedLockConfig) (LockDriver , error){
 type DistributedLockConfig struct {
 	Driver string
 	RetryLockDuration int
+	Key string
+	Timeout time.Duration
+	Ctx context.Context
 	RedisConfig drivers.RedisConfig
 }
 
