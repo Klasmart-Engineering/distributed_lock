@@ -15,7 +15,7 @@ var (
 	ErrLockTimeout = errors.New("Lock timeout")
 )
 
-type ILock interface {
+type LockDriver  interface {
 	Lock(key string, timeout time.Duration) error
 	Unlock(key string)
 }
@@ -45,7 +45,7 @@ func (r *RedisLock) Unlock(key string) {
 	drivers.GetRedis().Del(key)
 }
 
-func NewRedisLock(dc DistributedLockConfig) (ILock, error){
+func NewRedisLock(dc DistributedLockConfig) (LockDriver , error){
 	err := drivers.OpenRedis(dc.RedisConfig)
 	if err != nil{
 		return nil, err
@@ -62,7 +62,7 @@ type DistributedLockConfig struct {
 	RedisConfig drivers.RedisConfig
 }
 
-func NewDistributedLock(dc DistributedLockConfig) (ILock, error) {
+func NewDistributedLock(dc DistributedLockConfig) (LockDriver , error) {
 	if dc.RetryLockDuration <= 0 {
 		dc.RetryLockDuration = LockDelay
 	}
