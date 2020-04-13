@@ -26,7 +26,7 @@ type RedisLock struct {
 
 func (r *RedisLock) Lock(key string, timeout int) error {
 	//尝试等待5s
-	for i := 0; i < r.dc.LockDelay * 100; i++ {
+	for i := 0; i < r.dc.RetryLockDuration * 100; i++ {
 		ret, err := drivers.GetRedis().SetNX(key, "1", time.Duration(timeout)*time.Second).Result()
 		if err != nil {
 			return err
@@ -58,13 +58,13 @@ func NewRedisLock(dc DistributedLockConfig) (ILock, error){
 
 type DistributedLockConfig struct {
 	Driver string
-	LockDelay int
+	RetryLockDuration int
 	RedisConfig drivers.RedisConfig
 }
 
 func NewDistributedLock(dc DistributedLockConfig) (ILock, error) {
-	if dc.LockDelay <= 0 {
-		dc.LockDelay = LockDelay
+	if dc.RetryLockDuration <= 0 {
+		dc.RetryLockDuration = LockDelay
 	}
 	if dc.Driver == "redis" {
 		//打开redis
