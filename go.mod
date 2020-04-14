@@ -1,4 +1,4 @@
-module calmisland/distributed_lock
+module bitbucket.org/calmisland/distributed_lock
 
 go 1.14
 
