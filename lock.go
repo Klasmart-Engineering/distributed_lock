@@ -1,7 +1,7 @@
 package lock
 
 import (
-	"bitbucket.org/calmisland/distributed_lock/drivers"
+	"gitlab.badanamu.com.cn/calmisland/distributed_lock/drivers"
 	"context"
 	"errors"
 	"time"
