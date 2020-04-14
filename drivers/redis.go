@@ -2,7 +2,6 @@ package drivers
 
 import (
 	"fmt"
-
 	rd "github.com/go-redis/redis"
 )
 
