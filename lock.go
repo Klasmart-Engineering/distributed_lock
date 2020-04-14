@@ -1,7 +1,7 @@
-package distributed_lock
+package lock
 
 import (
-	"calmisland/distributed_lock/drivers"
+	"bitbucket.org/calmisland/distributed_lock/drivers"
 	"context"
 	"errors"
 	"time"
