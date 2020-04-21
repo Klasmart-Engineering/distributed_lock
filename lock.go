@@ -1,6 +1,7 @@
 package lock
 
 import (
+	"fmt"
 	"gitlab.badanamu.com.cn/calmisland/distributed_lock/drivers"
 	"context"
 	"errors"
@@ -34,11 +35,11 @@ func (r *RedisLock) Lock() {
 			default:
 				ret, _ := drivers.GetRedis().SetNX(r.dc.Key, "1", r.dc.Timeout).Result()
 				if ret {
+					fmt.Println("Already get lock")
 					r.isGetLock = true
 					r.lockChannel <- true
 					return
 				}
-
 				time.Sleep(time.Duration(10) * time.Millisecond)
 			}
 
@@ -47,7 +48,8 @@ func (r *RedisLock) Lock() {
 
 	select {
 	case <-r.lockChannel:
-		r.exitChannel <- struct{}{}
+		fmt.Println("Got lock")
+		//r.exitChannel <- struct{}{}
 		return
 	case <-r.dc.Ctx.Done():
 		r.exitChannel <- struct{}{}
@@ -57,6 +59,7 @@ func (r *RedisLock) Lock() {
 }
 
 func (r *RedisLock) Unlock() {
+	fmt.Println("Unlock Res:", r.isGetLock)
 	if !r.isGetLock{
 		return
 	}
