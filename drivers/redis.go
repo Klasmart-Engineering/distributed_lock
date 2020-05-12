@@ -7,6 +7,7 @@ import (
 
 var (
 	redis    *rd.Client
+	curConfig *RedisConfig
 )
 
 type RedisConfig struct {
@@ -15,7 +16,25 @@ type RedisConfig struct {
 	Password string
 }
 
+func checkConfig(config1, config2 RedisConfig) bool{
+	if config1.Host != config2.Host {
+		return false
+	}
+	if config1.Port != config2.Port {
+		return false
+	}
+	if config1.Password != config2.Password {
+		return false
+	}
+	return true
+}
+
 func OpenRedis(config RedisConfig) error{
+	//若已连接，且配置相同，则直接返回
+	if redis != nil && checkConfig(config, *curConfig){
+		return nil
+	}
+
 	//连接redis
 	redis = rd.NewClient(&rd.Options{
 		Addr:     fmt.Sprintf("%s:%d", config.Host, config.Port),
@@ -27,6 +46,7 @@ func OpenRedis(config RedisConfig) error{
 	if err != nil {
 		return err
 	}
+	curConfig = &config
 	return nil
 }
 
