@@ -7,7 +7,7 @@ import (
 
 var (
 	redis    *rd.Client
-	curConfig RedisConfig
+	curConfig *RedisConfig
 )
 
 type RedisConfig struct {
@@ -31,7 +31,7 @@ func checkConfig(config1, config2 RedisConfig) bool{
 
 func OpenRedis(config RedisConfig) error{
 	//若已连接，且配置相同，则直接返回
-	if redis != nil && checkConfig(config, curConfig){
+	if redis != nil && checkConfig(config, *curConfig){
 		return nil
 	}
 
@@ -44,9 +44,10 @@ func OpenRedis(config RedisConfig) error{
 	//测试Redis是否连接成功
 	_, err := redis.Ping().Result()
 	if err != nil {
+		redis = nil
 		return err
 	}
-	curConfig = config
+	curConfig = &config
 	return nil
 }
 
