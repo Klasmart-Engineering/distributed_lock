@@ -52,7 +52,6 @@ func (r *RedisLock) Lock() {
 		r.exitChannel <- struct{}{}
 		return
 	}
-
 }
 
 func (r *RedisLock) Unlock() {
@@ -63,7 +62,7 @@ func (r *RedisLock) Unlock() {
 	r.isGetLock = false
 }
 
-func NewRedisLock(dc DistributedLockConfig) (LockDriver, error) {
+func NewRedisLock (dc DistributedLockConfig) (LockDriver, error) {
 	err := drivers.OpenRedis(dc.RedisConfig)
 	if err != nil {
 		return nil, err
