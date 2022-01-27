@@ -3,11 +3,13 @@ package drivers
 import (
 	"fmt"
 	rd "github.com/go-redis/redis"
+	"sync"
 )
 
 var (
 	redis    *rd.Client
 	curConfig RedisConfig
+	_openOnce sync.Once
 )
 
 type RedisConfig struct {
@@ -30,25 +32,27 @@ func checkConfig(config1, config2 RedisConfig) bool{
 }
 
 func OpenRedis(config RedisConfig) error{
-	//若已连接，且配置相同，则直接返回
+	_openOnce.Do(func() {
+		//若已连接，且配置相同，则直接返回
+		//if redis != nil && checkConfig(config, curConfig){
+		//	return nil
+		//}
 
-	if redis != nil && checkConfig(config, curConfig){
-		return nil
-	}
-
-	//连接redis
-	redis = rd.NewClient(&rd.Options{
-		Addr:     fmt.Sprintf("%s:%d", config.Host, config.Port),
-		Password: config.Password, // no password set
-		DB:       0,                     // use default DB
+		//连接redis
+		redis = rd.NewClient(&rd.Options{
+			Addr:     fmt.Sprintf("%s:%d", config.Host, config.Port),
+			Password: config.Password, // no password set
+			DB:       0,                     // use default DB
+		})
+		//测试Redis是否连接成功
+		//_, err := redis.Ping().Result()
+		//if err != nil {
+		//	redis = nil
+		//	return err
+		//}
+		curConfig = config
 	})
-	//测试Redis是否连接成功
-	_, err := redis.Ping().Result()
-	if err != nil {
-		redis = nil
-		return err
-	}
-	curConfig = config
+
 	return nil
 }
 
