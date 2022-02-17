@@ -22,7 +22,7 @@ type RedisLock struct {
 	dc          DistributedLockConfig
 	lockChannel chan bool
 	exitChannel chan struct{}
-	value	string
+	value       string
 }
 
 func (r *RedisLock) Lock() {
@@ -54,13 +54,11 @@ func (r *RedisLock) Lock() {
 }
 
 func (r *RedisLock) Unlock() {
-	value := drivers.GetRedis().Get(r.dc.Key).Val()
-	if r.value == value {
-		drivers.GetRedis().Del(r.dc.Key)
-	}
+	drivers.GetRedis().Eval("if redis.call(\"get\",KEYS[1]) == ARGV[1] then return redis.call(\"del\",KEYS[1]) else return 0 end",
+		[]string{r.dc.Key}, []string{r.value}).Err()
 }
 
-func NewRedisLock (dc DistributedLockConfig) (LockDriver, error) {
+func NewRedisLock(dc DistributedLockConfig) (LockDriver, error) {
 	err := drivers.OpenRedis(dc.RedisConfig)
 	if err != nil {
 		return nil, err
@@ -69,7 +67,7 @@ func NewRedisLock (dc DistributedLockConfig) (LockDriver, error) {
 		dc:          dc,
 		lockChannel: make(chan bool),
 		exitChannel: make(chan struct{}),
-		value: utils.RandNum(),
+		value:       utils.RandNum(),
 	}, nil
 }
 
