@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gitlab.badanamu.com.cn/calmisland/distributed_lock/drivers"
+	"gitlab.badanamu.com.cn/calmisland/distributed_lock/utils"
 	"strconv"
 	"sync"
 	"testing"
@@ -28,7 +29,7 @@ func TestLock(t *testing.T) {
 		Timeout: time.Minute * 1,
 		Ctx:     context.Background(),
 		RedisConfig: drivers.RedisConfig{
-			Host:    "127.0.0.1",
+			Host:    "192.168.1.234",
 			Port:     6379,
 			Password: "",
 		},
@@ -44,4 +45,36 @@ func TestLock(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func TestLock0(t *testing.T) {
+	x := 0
+	cfg := DistributedLockConfig{
+		Driver:  "redis",
+		Key:     fmt.Sprintf("lock.order.%v", utils.RandNum()),
+		Timeout: time.Minute * 1,
+		Ctx:     context.Background(),
+		RedisConfig: drivers.RedisConfig{
+			Host:    "192.168.1.234",
+			Port:     6379,
+			Password: "",
+		},
+	}
+
+	wg := new(sync.WaitGroup)
+	for i := 0; i < 1000; i ++ {
+		wg.Add(1)
+		go func() {
+			redisLock, err := NewRedisLock(cfg)
+			if err != nil{
+				panic(err)
+			}
+			redisLock.Lock()
+			x ++
+			redisLock.Unlock()
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	fmt.Println(x)
 }
