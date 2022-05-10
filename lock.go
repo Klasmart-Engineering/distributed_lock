@@ -1,11 +1,12 @@
 package lock
 
 import (
-	"fmt"
-	"gitlab.badanamu.com.cn/calmisland/distributed_lock/drivers"
 	"context"
 	"errors"
+	"fmt"
 	"time"
+
+	"github.com/KL-Engineering/imq/distributed_lock/drivers"
 )
 
 var (
@@ -22,7 +23,7 @@ type RedisLock struct {
 	dc          DistributedLockConfig
 	lockChannel chan bool
 	exitChannel chan struct{}
-	isGetLock	bool
+	isGetLock   bool
 }
 
 func (r *RedisLock) Lock() {
@@ -60,7 +61,7 @@ func (r *RedisLock) Lock() {
 
 func (r *RedisLock) Unlock() {
 	fmt.Println("Unlock Res:", r.isGetLock)
-	if !r.isGetLock{
+	if !r.isGetLock {
 		return
 	}
 	drivers.GetRedis().Del(r.dc.Key)

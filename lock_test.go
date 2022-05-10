@@ -3,15 +3,17 @@ package lock
 import (
 	"context"
 	"fmt"
-	"gitlab.badanamu.com.cn/calmisland/distributed_lock/drivers"
 	"strconv"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/KL-Engineering/imq/distributed_lock/drivers"
 )
+
 var wg sync.WaitGroup
 
-func testPrint(ld LockDriver, s string){
+func testPrint(ld LockDriver, s string) {
 	ld.Lock()
 	defer func() {
 		ld.Unlock()
@@ -28,16 +30,16 @@ func TestLock(t *testing.T) {
 		Timeout: time.Minute * 1,
 		Ctx:     context.Background(),
 		RedisConfig: drivers.RedisConfig{
-			Host:    "127.0.0.1",
+			Host:     "127.0.0.1",
 			Port:     6379,
 			Password: "",
 		},
 	})
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 
-	for i := 0; i < 100; i ++ {
+	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go testPrint(redisLock, strconv.Itoa(i))
 		//time.Sleep(time.Second)
