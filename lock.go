@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/KL-Engineering/imq/distributed_lock/drivers"
+	"github.com/KL-Engineering/distributed_lock/drivers"
 )
 
 var (

@@ -1,4 +1,4 @@
-module github.com/KL-Engineering/imq/distributed_lock
+module github.com/KL-Engineering/distributed_lock
 
 go 1.18
 
